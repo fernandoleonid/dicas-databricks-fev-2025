@@ -1,4 +1,4 @@
-# Análise de Dados de Vendas de Jogos
+# DICAS -  Análise de Dados de Vendas de Jogos
 
 Este projeto contém a análise de dados sobre vendas de jogos em três países: Alemanha, Japão e Estados Unidos. O objetivo do projeto é realizar a leitura, limpeza e análise dos dados para entender as tendências de vendas, como as vendas totais por console e por ano.
 
