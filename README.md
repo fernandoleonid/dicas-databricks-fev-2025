@@ -1,6 +1,3 @@
-Aqui está um exemplo de **README.md** que pode ser utilizado para descrever o processo de leitura, limpeza e análise dos dados que você forneceu:
-
-```markdown
 # Análise de Dados de Vendas de Jogos
 
 Este projeto contém a análise de dados sobre vendas de jogos em três países: Alemanha, Japão e Estados Unidos. O objetivo do projeto é realizar a leitura, limpeza e análise dos dados para entender as tendências de vendas, como as vendas totais por console e por ano.
@@ -104,23 +101,3 @@ df_total_por_ano = df_final.groupBy("Ano").agg(
 json_data = df_final.toJSON().collect()
 json_string = '{"jogos": [' + ",".join(json_data) + ']}'
 dbutils.fs.put("dbfs:/FileStore/tables/jogos/jogos_limpos2.json", json_string, overwrite=True)
-```
-
-## Tecnologias Utilizadas
-
-- **Apache Spark**: Utilizado para processamento e análise de dados em grande escala.
-- **Databricks**: Plataforma para trabalhar com Spark de forma simplificada.
-- **Pandas**: Para manipulação de dados (opcional, dependendo da análise).
-- **PySpark**: Interface Python para o Apache Spark.
-
-## Contribuições
-
-Se você quiser contribuir com este projeto, fique à vontade para fazer um fork, enviar pull requests ou abrir issues com sugestões.
-
-## Licença
-
-Este projeto está licenciado sob a MIT License - veja o arquivo [LICENSE](LICENSE) para mais detalhes.
-
-```
-
-Esse README fornece uma visão geral clara do projeto, descreve as etapas do processamento dos dados e também inclui um exemplo de código. Ele pode ser facilmente adaptado para outros projetos ou arquivos conforme necessário.
