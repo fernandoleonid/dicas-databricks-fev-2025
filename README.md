@@ -1,4 +1,5 @@
-# DICAS -  Análise de Dados de Vendas de Jogos
+
+# Análise de Dados de Vendas de Jogos
 
 Este projeto contém a análise de dados sobre vendas de jogos em três países: Alemanha, Japão e Estados Unidos. O objetivo do projeto é realizar a leitura, limpeza e análise dos dados para entender as tendências de vendas, como as vendas totais por console e por ano.
 
@@ -38,12 +39,17 @@ Você pode acessar os arquivos exportados diretamente do Databricks:
 - **Arquivo JSON com os dados limpos**:  
   [Jogos Limpos (JSON)](https://community.cloud.databricks.com/files/tables/jogos/jogos_limpos2.json)
 
-## Código
+## Notebooks
 
-O código utilizado para ler, limpar, analisar e exportar os dados é descrito abaixo:
+### 1. **Notebook 01 - Ler Dados**
+
+Este notebook é responsável por ler os dados dos arquivos CSV e Excel, adicionar uma coluna para identificar o país de origem dos dados, e unir todos os dados em um único DataFrame.
 
 ```python
-# Leitura dos arquivos
+# Exibir os arquivos na pasta especificada
+display(dbutils.fs.ls("dbfs:/FileStore/tables/jogos"))
+
+# Caminhos dos arquivos de dados, no caso adicionei 3 arquivos
 file_path_germany = "dbfs:/FileStore/tables/jogos/Germany.csv"
 file_path_japan = "dbfs:/FileStore/tables/jogos/Japan.csv"
 file_path_usa = "dbfs:/FileStore/tables/jogos/USA.xlsx"
@@ -52,52 +58,120 @@ file_path_usa = "dbfs:/FileStore/tables/jogos/USA.xlsx"
 from pyspark.sql import SparkSession
 spark = SparkSession.builder.appName("Spark DataFrames").getOrCreate()
 
-# Ler os arquivos CSV
+# Ler os arquivos CSV DataFrames
 df_germany = spark.read.csv(file_path_germany, header=True, inferSchema=True)
 df_japan = spark.read.csv(file_path_japan, header=True, inferSchema=True)
 
-# Ler os arquivos Excel
-df_usa = spark.read.format("com.crealytics.spark.excel") \
-                   .option("header", "true")\
-                   .option("inferSchema", "true")\
-                   .load(file_path_usa)
+# Ler os arquivos Excel para DataFrames
+df_usa = spark.read.format("com.crealytics.spark.excel")                    .option("header", "true")                   .option("inferSchema", "true")                   .load(file_path_usa)
 
-# Exibir os primeiros registros
+# Exibir os primeiros registros de cada DataFrame
 df_germany.show()
 df_japan.show()
 df_usa.show()
 
-# Adicionar coluna 'País' para identificar a origem dos dados
+# Adicionar uma coluna "País" para identificar a origem dos dados
 from pyspark.sql.functions import lit
 df_germany = df_germany.withColumn("País", lit("Germany"))
 df_japan = df_japan.withColumn("País", lit("Japan"))
 df_usa = df_usa.withColumn("País", lit("USA"))
 
-# Unir os DataFrames
+# Unir todos os DataFrames em um único DataFrame
 df_final = df_germany.union(df_japan).union(df_usa)
 
-# Limpeza e ordenação dos dados
+# Extrair apenas os números da coluna "Jogo" e converter para inteiro
 from pyspark.sql.functions import regexp_extract, col
 df_final = df_final.withColumn("Jogo", regexp_extract(col("Jogo"), r"(\d+)", 1).cast("int"))
-df_final = df_final.orderBy("Jogo")
 
-# Filtragem dos dados
-df_final = df_final.filter(col("Unidades Vendidas (Milhões)") >= 1)
+# Ordenar os dados pela coluna "Jogo"
+df_final = df_final.orderBy("Jogo")
+df_final.show(10)
+
+# Salvar o DataFrame consolidado como CSV
+df_final.write.mode("overwrite").option("header", "true").csv("dbfs:/FileStore/tables/jogos/final.csv")
+```
+
+### 2. **Notebook 02 - Limpeza**
+
+Este notebook realiza a limpeza dos dados, filtrando os jogos que venderam mais de 1 milhão de unidades e salvando os dados em um arquivo CSV.
+
+```python
+df_lido = spark.read.option("header", "true").csv("dbfs:/FileStore/tables/jogos/final.csv")
+df_lido.show()
+
+# Filtrar apenas os jogos que venderam mais de 1 milhão de unidades
+df_lido = df_lido.filter(col("Unidades Vendidas (Milhões)") >= 1)
+df_lido.show()
 
 # Salvar o DataFrame filtrado como CSV
-df_final.coalesce(1).write.mode("overwrite").option("header", "true").csv("dbfs:/FileStore/tables/jogos/jogos_limpos.csv")
+df_lido.coalesce(1).write.mode("overwrite").option("header", "true").csv("dbfs:/FileStore/tables/jogos/jogos_limpos.csv")
+df_limpo = spark.read.option("header", "true").csv("dbfs:/FileStore/tables/jogos/jogos_limpos.csv")
+df_limpo.show()
+```
 
-# Análise: Vendas por Console e Ano
+### 3. **Notebook 03 - Análise**
+
+Este notebook realiza a análise dos dados, calculando o total de unidades vendidas por console e por ano.
+
+```python
+df_limpo = spark.read.option("header", "true").csv("dbfs:/FileStore/tables/jogos/jogos_limpos.csv")
+df_limpo.show(5)
+
+# Agrupar os dados pelo console e calcular o total de unidades vendidas
 from pyspark.sql.functions import sum, round
-df_total_por_console = df_final.groupBy("Console").agg(
+df_total_por_console = df_limpo.groupBy("Console").agg(
     round(sum("Unidades Vendidas (Milhões)"), 2).alias("Total Unidades Vendidas")
 )
 
-df_total_por_ano = df_final.groupBy("Ano").agg(
+# Ordenar do maior para o menor total de vendas
+df_total_por_console = df_total_por_console.orderBy("Total Unidades Vendidas", ascending=False)
+df_total_por_console.show()
+
+# Agrupar os dados por ano e calcular o total de unidades vendidas
+df_total_por_ano = df_limpo.groupBy("Ano").agg(
     round(sum("Unidades Vendidas (Milhões)"), 2).alias("Total Unidades Vendidas")
 )
 
-# Exportar para JSON
-json_data = df_final.toJSON().collect()
+# Ordenar os anos do mais recente para o mais antigo
+df_total_por_ano = df_total_por_ano.orderBy("Ano", ascending=False)
+df_total_por_ano.show()
+```
+
+### 4. **Notebook 04 - Exportar**
+
+Este notebook exporta os dados limpos para JSON e os salva no DBFS, além de gerar uma URL para acesso.
+
+```python
+# Converter o DataFrame para JSON e salvar no DBFS
+import json
+df_limpo = spark.read.option("header", "true").csv("dbfs:/FileStore/tables/jogos/jogos_limpos.csv")
+
+# Transformar o DataFrame em uma lista de strings JSON
+json_data = df_limpo.toJSON().collect()
+
+# Criar a string JSON final
 json_string = '{"jogos": [' + ",".join(json_data) + ']}'
+
+# Salvar o JSON no DBFS
 dbutils.fs.put("dbfs:/FileStore/tables/jogos/jogos_limpos2.json", json_string, overwrite=True)
+
+# Gerar a URL do arquivo JSON
+instance_url = "https://community.cloud.databricks.com"
+file_path = f"{instance_url}/files/tables/jogos/jogos_limpos2.json"
+
+print("URL do arquivo:", file_path)
+```
+
+## Tecnologias Utilizadas
+
+- **Apache Spark**: Utilizado para processamento e análise de dados em grande escala.
+- **Databricks**: Plataforma para trabalhar com Spark de forma simplificada.
+- **PySpark**: Interface Python para o Apache Spark.
+
+## Contribuições
+
+Se você quiser contribuir com este projeto, fique à vontade para fazer um fork, enviar pull requests ou abrir issues com sugestões.
+
+## Licença
+
+Este projeto está licenciado sob a MIT License - veja o arquivo [LICENSE](LICENSE) para mais detalhes.
