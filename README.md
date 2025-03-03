@@ -1,5 +1,5 @@
 
-# Análise de Dados de Vendas de Jogos
+# Dicas Databricks - Análise de Dados de Vendas de Jogos
 
 Este projeto contém a análise de dados sobre vendas de jogos em três países: Alemanha, Japão e Estados Unidos. O objetivo do projeto é realizar a leitura, limpeza e análise dos dados para entender as tendências de vendas, como as vendas totais por console e por ano.
 
@@ -29,16 +29,6 @@ Os dados limpos e analisados foram exportados em diferentes formatos:
 - CSV: Os dados filtrados (somente jogos com mais de 1 milhão de unidades vendidas) foram salvos em um arquivo CSV.
 - JSON: O DataFrame final foi transformado em um arquivo JSON, que também foi armazenado no DBFS.
 
-## Acessando os Arquivos
-
-Você pode acessar os arquivos exportados diretamente do Databricks:
-
-- **Arquivo CSV com os dados filtrados**:  
-  [Jogos Limpos (CSV)](https://community.cloud.databricks.com/files/tables/jogos/jogos_limpos.csv)
-  
-- **Arquivo JSON com os dados limpos**:  
-  [Jogos Limpos (JSON)](https://community.cloud.databricks.com/files/tables/jogos/jogos_limpos2.json)
-
 ## Notebooks
 
 ### 1. **Notebook 01 - Ler Dados**
@@ -63,7 +53,7 @@ df_germany = spark.read.csv(file_path_germany, header=True, inferSchema=True)
 df_japan = spark.read.csv(file_path_japan, header=True, inferSchema=True)
 
 # Ler os arquivos Excel para DataFrames
-df_usa = spark.read.format("com.crealytics.spark.excel")                    .option("header", "true")                   .option("inferSchema", "true")                   .load(file_path_usa)
+df_usa = spark.read.format("com.crealytics.spark.excel").option("header", "true").option("inferSchema", "true").load(file_path_usa)
 
 # Exibir os primeiros registros de cada DataFrame
 df_germany.show()
@@ -156,6 +146,12 @@ json_string = '{"jogos": [' + ",".join(json_data) + ']}'
 dbutils.fs.put("dbfs:/FileStore/tables/jogos/jogos_limpos2.json", json_string, overwrite=True)
 
 # Gerar a URL do arquivo JSON
+
+# Opção 1 - Utilizando o azure databricks 
+instance_url = SparkSession.builder.getOrCreate().conf.get("spark.databricks.workspaceUrl")
+file_path = f"https://{instance_url}/files/tables/jogos/jogos_limpos2.json"
+
+#Opção 2 - Utilizando o databricls community
 instance_url = "https://community.cloud.databricks.com"
 file_path = f"{instance_url}/files/tables/jogos/jogos_limpos2.json"
 
