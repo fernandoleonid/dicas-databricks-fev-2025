@@ -5,7 +5,7 @@ Este projeto contém a análise de dados sobre vendas de jogos em três países:
 
 ## Estrutura dos Arquivos
 
-- **Germany.csv**: Dados sobre vendas de jogos na Alemanha.
+- [**Germany.csv**](data/Germany.csv): Dados sobre vendas de jogos na Alemanha.
 - **Japan.csv**: Dados sobre vendas de jogos no Japão.
 - **USA.xlsx**: Dados sobre vendas de jogos nos Estados Unidos.
 
