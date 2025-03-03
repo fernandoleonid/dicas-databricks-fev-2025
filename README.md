@@ -11,7 +11,7 @@ Este projeto contém a análise de dados sobre vendas de jogos em três países:
 
 Esses arquivos foram lidos e combinados em um único DataFrame para análise posterior.
 
-Obs.: Para carregar os arquivos, no Azure databricks, foi utilizado a opção "Upload de ficheiros para o DBFS"
+**Obs.: Para carregar os arquivos, no Azure databricks, foi utilizado a opção "Upload de ficheiros para o DBFS"**
 
 ## Etapas do Processo
 
